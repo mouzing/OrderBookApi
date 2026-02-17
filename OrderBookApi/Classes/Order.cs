@@ -40,6 +40,4 @@ public class Order
             OrderDate = DateTime.UtcNow
         };
     } 
-    
-    // change
 }
