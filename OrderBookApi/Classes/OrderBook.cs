@@ -193,11 +193,21 @@ public class OrderBook
 
     public IEnumerable<Order>? GetBestBidOrders()
     {
-        return BuyOrders.Peek();
+        return BuyOrders.Count > 0 ? BuyOrders.Peek() : null;
     }
 
     public IEnumerable<Order>? GetBestAskOrders()
     {
-        return SellOrders.Peek();
+        return SellOrders.Count > 0 ? SellOrders.Peek() : null;
+    }
+    
+    public Dictionary<decimal, Queue<Order>>? GetAllBidOrders()
+    {
+        return BuyOrders.Count > 0 ? BuyOrderLookUpTable : null;
+    }
+
+    public Dictionary<decimal, Queue<Order>>? GetAllAskOrders()
+    {
+        return SellOrders.Count > 0 ? SellOrderLookUpTable : null;
     }
 }
