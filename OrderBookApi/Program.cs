@@ -7,7 +7,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 // Create a singleton OrderBook instance that lives for the app lifetime
-//builder.Services.AddSingleton<OrderBook>(new OrderBook());
 builder.Services.AddSingleton<OrderBookService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<OrderBookService>());
 

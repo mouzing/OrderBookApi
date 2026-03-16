@@ -6,6 +6,7 @@ public class OrderBookService : IHostedService
 {
     private readonly Channel<Order> _channel;
     private readonly OrderBook _orderBook;
+    private Task _consumerTask;
 
     public OrderBookService()
     {
@@ -13,7 +14,6 @@ public class OrderBookService : IHostedService
         _orderBook = new OrderBook();
     }
 
-    // Producers call this (controllers, websocket handlers, etc.)
     public ValueTask SubmitOrderAsync(Order order) => _channel.Writer.WriteAsync(order);
     
     // Not thread safe but whatever
@@ -23,23 +23,24 @@ public class OrderBookService : IHostedService
     public Dictionary<decimal, Queue<Order>>? GetAllAskOrders() => _orderBook.GetAllAskOrders();
 
     // Single consumer — runs on one thread
-    private async Task ConsumeAsync(CancellationToken ct)
+    private async Task ConsumeAsync()
     {
-        await foreach (var order in _channel.Reader.ReadAllAsync(ct))
+        await foreach (var order in _channel.Reader.ReadAllAsync())
         {
             _orderBook.SubmitOrder(order); // always single-threaded
         }
     }
 
-    public Task StartAsync(CancellationToken ct)
+    public Task StartAsync(CancellationToken cancellationToken) // Required by IHostedService
     {
-        _ = ConsumeAsync(ct); // fire and forget the consumer loop
+        _consumerTask = ConsumeAsync(); // Store the Task so that StopAsync can finish processing 
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken ct)
+    public async Task StopAsync(CancellationToken ct)
     {
         _channel.Writer.Complete(); // signals consumer to finish
-        return Task.CompletedTask;
+        await _consumerTask;
+        //await _consumerTask.WaitAsync(ct); // Would wait "some time" (30 seconds is default) before pulling the plug
     }
 }
